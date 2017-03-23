@@ -3,7 +3,13 @@ forked from
 https://github.com/booz-allen-hamilton/DSB3Tutorial
 as 
 https://github.com/jiandai/DSB3Tutorial
-hacked ver 20170323 by jian: link directly to sample scan for DSB17
+hacked ver 20170323 by jian: 
+    - use sample scan for DSB17 as input instead
+    - node mask in this script is only resized / commented out entirely
+    - merge two loops into one single loop
+    - redefine the output as preprocessed figures
+
+to-do: 
 '''
 import numpy as np
 from skimage import morphology
@@ -11,23 +17,29 @@ from skimage import measure
 from sklearn.cluster import KMeans
 from skimage.transform import resize
 from glob import glob
-
 import matplotlib.pyplot as plt
+
+
+
+def debugPlot(x):
+    fig, ax = plt.subplots()
+    cax=ax.imshow(x)
+    cbar = fig.colorbar(cax)
+    plt.show()
 
 #working_path = "/home/jonathan/tutorial/"
 working_path = '../../input/sample_images/'
 #file_list=glob(working_path+"images_*.npy")
 file_list=glob(working_path+'*')
-#print file_list
 import dicom
+out_images = []      #final set of images
 for img_file in file_list[:1]:
     # I ran into an error when using Kmean on np.float16, so I'm using np.float64 here
     #imgs_to_process = np.load(img_file).astype(np.float64) 
     imgs_to_process = [dicom.read_file(f).pixel_array.astype(np.float64) for f in glob(working_path+img_file+'/*.dcm')]
-    print "on image", img_file
-    for i in range(len(imgs_to_process))[:1]:
+    print("on image", img_file)
+    for i in range(len(imgs_to_process))[100:103]:
         img = imgs_to_process[i]
-	#plt.imshow(img);plt.show()
         #Standardize the pixel values
         mean = np.mean(img)
         std = np.std(img)
@@ -91,11 +103,10 @@ for img_file in file_list[:1]:
             mask = mask + np.where(labels==N,1,0)
         mask = morphology.dilation(mask,np.ones([10,10])) # one last dilation
         imgs_to_process[i] = mask
-	print mask
-	#plt.imshow(img);plt.show()
-	#plt.imshow(mask);plt.show()
+
+
+
     #np.save(img_file.replace("images","lungmask"),imgs_to_process)
-quit()
     
 
 #
@@ -103,18 +114,21 @@ quit()
 #
 
 
-file_list=glob(working_path+"lungmask_*.npy")
-out_images = []      #final set of images
-out_nodemasks = []   #final set of nodemasks
-for fname in file_list:
-    print "working on file ", fname
-    imgs_to_process = np.load(fname.replace("lungmask","images"))
-    masks = np.load(fname)
-    node_masks = np.load(fname.replace("lungmask","masks"))
-    for i in range(len(imgs_to_process)):
-        mask = masks[i]
-        node_mask = node_masks[i]
-        img = imgs_to_process[i]
+#file_list=glob(working_path+"lungmask_*.npy")
+#out_nodemasks = []   #final set of nodemasks
+#for fname in file_list:
+#    print("working on file ", fname)
+#    imgs_to_process = np.load(fname.replace("lungmask","images"))
+#    masks = np.load(fname)
+#    node_masks = np.load(fname.replace("lungmask","masks"))
+#    for i in range(len(imgs_to_process)):
+#        mask = masks[i]
+#        node_mask = node_masks[i]
+#        img = imgs_to_process[i] 
+
+
+
+
         new_size = [512,512]   # we're scaling back up to the original size of the image
         img= mask*img          # apply lung mask
         #
@@ -160,7 +174,9 @@ for fname in file_list:
         # cropping the image down to the bounding box for all regions
         # (there's probably an skimage command that can do this in one line)
         # 
-        img = img[min_row:max_row,min_col:max_col]
+        img = img[min_row:max_row,min_col:max_col] 
+        debugPlot(img)
+
         mask =  mask[min_row:max_row,min_col:max_col]
         if max_row-min_row <5 or max_col-min_col<5:  # skipping all images with no god regions
             pass
@@ -171,26 +187,32 @@ for fname in file_list:
             min = np.min(img)
             max = np.max(img)
             img = img/(max-min)
-            new_img = resize(img,[512,512])
-            new_node_mask = resize(node_mask[min_row:max_row,min_col:max_col],[512,512])
+            new_img = resize(img,[512,512]) 
+            debugPlot(new_img)
+            #new_node_mask = resize(node_mask[min_row:max_row,min_col:max_col],[512,512])
             out_images.append(new_img)
-            out_nodemasks.append(new_node_mask)
+            #out_nodemasks.append(new_node_mask)
 
 num_images = len(out_images)
+
+print(num_images)
 #
 #  Writing out images and masks as 1 channel arrays for input into network
 #
 final_images = np.ndarray([num_images,1,512,512],dtype=np.float32)
-final_masks = np.ndarray([num_images,1,512,512],dtype=np.float32)
+#final_masks = np.ndarray([num_images,1,512,512],dtype=np.float32)
 for i in range(num_images):
     final_images[i,0] = out_images[i]
-    final_masks[i,0] = out_nodemasks[i]
+    #final_masks[i,0] = out_nodemasks[i]
 
-rand_i = np.random.choice(range(num_images),size=num_images,replace=False)
-test_i = int(0.2*num_images)
-np.save(working_path+"trainImages.npy",final_images[rand_i[test_i:]])
-np.save(working_path+"trainMasks.npy",final_masks[rand_i[test_i:]])
-np.save(working_path+"testImages.npy",final_images[rand_i[:test_i]])
-np.save(working_path+"testMasks.npy",final_masks[rand_i[:test_i]])
+#rand_i = np.random.choice(range(num_images),size=num_images,replace=False)
+#test_i = int(0.2*num_images)
+#np.save(working_path+"trainImages.npy",final_images[rand_i[test_i:]])
+#np.save(working_path+"trainMasks.npy",final_masks[rand_i[test_i:]])
+#np.save(working_path+"testImages.npy",final_images[rand_i[:test_i]])
+#np.save(working_path+"testMasks.npy",final_masks[rand_i[:test_i]])
+
+np.save("pre-processed-images.npy",final_images)
+
 
 
