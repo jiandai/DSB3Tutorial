@@ -1,3 +1,15 @@
+'''
+forked from
+https://github.com/booz-allen-hamilton/DSB3Tutorial
+as
+https://github.com/jiandai/DSB3Tutorial
+hacked ver 20170323 by jian:
+    - rewire the input/output from LUNA_segment_lung_ROI.py 
+to-do:
+'''
+
+
+
 from __future__ import print_function
 
 import numpy as np
@@ -8,7 +20,8 @@ from keras.optimizers import SGD
 from keras.callbacks import ModelCheckpoint, LearningRateScheduler
 from keras import backend as K
 
-working_path = "/home/jonathan/tutorial/"
+#working_path = "/home/jonathan/tutorial/"
+working_path = "./"
 
 K.set_image_dim_ordering('th')  # Theano dimension ordering in this code
 
@@ -84,29 +97,30 @@ def train_and_predict(use_existing):
     print('-'*30)
     print('Loading and preprocessing train data...')
     print('-'*30)
-    imgs_train = np.load(working_path+"trainImages.npy").astype(np.float32)
-    imgs_mask_train = np.load(working_path+"trainMasks.npy").astype(np.float32)
+    #imgs_train = np.load(working_path+"trainImages.npy").astype(np.float32)
+    #imgs_mask_train = np.load(working_path+"trainMasks.npy").astype(np.float32)
 
-    imgs_test = np.load(working_path+"testImages.npy").astype(np.float32)
-    imgs_mask_test_true = np.load(working_path+"testMasks.npy").astype(np.float32)
+    #imgs_test = np.load(working_path+"testImages.npy").astype(np.float32)
+    imgs_test = np.load(working_path+"pre-processed-images.npy").astype(np.float32)
+    #imgs_mask_test_true = np.load(working_path+"testMasks.npy").astype(np.float32)
     
-    mean = np.mean(imgs_train)  # mean for data centering
-    std = np.std(imgs_train)  # std for data normalization
+    #mean = np.mean(imgs_train)  # mean for data centering
+    #std = np.std(imgs_train)  # std for data normalization
 
-    imgs_train -= mean  # images should already be standardized, but just in case
-    imgs_train /= std
+    #imgs_train -= mean  # images should already be standardized, but just in case
+    #imgs_train /= std
 
     print('-'*30)
     print('Creating and compiling model...')
     print('-'*30)
     model = get_unet()
     # Saving weights to unet.hdf5 at checkpoints
-    model_checkpoint = ModelCheckpoint('unet.hdf5', monitor='loss', save_best_only=True)
+    #model_checkpoint = ModelCheckpoint('unet.hdf5', monitor='loss', save_best_only=True)
     #
     # Should we load existing weights? 
     # Set argument for call to train_and_predict to true at end of script
     if use_existing:
-        model.load_weights('./unet.hdf5')
+        model.load_weights('../unet.hdf5') # modify the path
         
     # 
     # The final results for this tutorial were produced using a multi-GPU
@@ -119,28 +133,29 @@ def train_and_predict(use_existing):
     print('-'*30)
     print('Fitting model...')
     print('-'*30)
-    model.fit(imgs_train, imgs_mask_train, batch_size=2, nb_epoch=20, verbose=1, shuffle=True,
-              callbacks=[model_checkpoint])
+    #model.fit(imgs_train, imgs_mask_train, batch_size=2, nb_epoch=20, verbose=1, shuffle=True, callbacks=[model_checkpoint])
 
     # loading best weights from training session
     print('-'*30)
     print('Loading saved weights...')
     print('-'*30)
-    model.load_weights('./unet.hdf5')
+    #model.load_weights('./unet.hdf5')
 
     print('-'*30)
     print('Predicting masks on test data...')
     print('-'*30)
     num_test = len(imgs_test)
+    print (num_test)
     imgs_mask_test = np.ndarray([num_test,1,512,512],dtype=np.float32)
     for i in range(num_test):
         imgs_mask_test[i] = model.predict([imgs_test[i:i+1]], verbose=0)[0]
-    np.save('masksTestPredicted.npy', imgs_mask_test)
-    mean = 0.0
-    for i in range(num_test):
-        mean+=dice_coef_np(imgs_mask_test_true[i,0], imgs_mask_test[i,0])
-    mean/=num_test
-    print("Mean Dice Coeff : ",mean)
+    #np.save('masksTestPredicted.npy', imgs_mask_test)
+    #mean = 0.0
+    #for i in range(num_test):
+    #    mean+=dice_coef_np(imgs_mask_test_true[i,0], imgs_mask_test[i,0])
+    #mean/=num_test
+    #print("Mean Dice Coeff : ",mean)
 
 if __name__ == '__main__':
-    train_and_predict(False)
+    #train_and_predict(False)
+    train_and_predict(True)
