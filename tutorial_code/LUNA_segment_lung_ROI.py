@@ -1,3 +1,10 @@
+'''
+forked from 
+https://github.com/booz-allen-hamilton/DSB3Tutorial
+as 
+https://github.com/jiandai/DSB3Tutorial
+hacked ver 20170323 by jian: link directly to sample scan for DSB17
+'''
 import numpy as np
 from skimage import morphology
 from skimage import measure
@@ -5,15 +12,22 @@ from sklearn.cluster import KMeans
 from skimage.transform import resize
 from glob import glob
 
-working_path = "/home/jonathan/tutorial/"
-file_list=glob(working_path+"images_*.npy")
+import matplotlib.pyplot as plt
 
-for img_file in file_list:
+#working_path = "/home/jonathan/tutorial/"
+working_path = '../../input/sample_images/'
+#file_list=glob(working_path+"images_*.npy")
+file_list=glob(working_path+'*')
+#print file_list
+import dicom
+for img_file in file_list[:1]:
     # I ran into an error when using Kmean on np.float16, so I'm using np.float64 here
-    imgs_to_process = np.load(img_file).astype(np.float64) 
+    #imgs_to_process = np.load(img_file).astype(np.float64) 
+    imgs_to_process = [dicom.read_file(f).pixel_array.astype(np.float64) for f in glob(working_path+img_file+'/*.dcm')]
     print "on image", img_file
-    for i in range(len(imgs_to_process)):
+    for i in range(len(imgs_to_process))[:1]:
         img = imgs_to_process[i]
+	#plt.imshow(img);plt.show()
         #Standardize the pixel values
         mean = np.mean(img)
         std = np.std(img)
@@ -77,7 +91,11 @@ for img_file in file_list:
             mask = mask + np.where(labels==N,1,0)
         mask = morphology.dilation(mask,np.ones([10,10])) # one last dilation
         imgs_to_process[i] = mask
-    np.save(img_file.replace("images","lungmask"),imgs_to_process)
+	print mask
+	#plt.imshow(img);plt.show()
+	#plt.imshow(mask);plt.show()
+    #np.save(img_file.replace("images","lungmask"),imgs_to_process)
+quit()
     
 
 #
