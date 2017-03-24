@@ -1,3 +1,24 @@
+'''
+forked from
+https://github.com/booz-allen-hamilton/DSB3Tutorial
+as
+https://github.com/jiandai/DSB3Tutorial
+hacked ver 20170323 by jian:
+	- rewire the input/output from LUNA_segment_lung_ROI.py
+	- use pretrained unet in LUNA_train_unet.py
+to-do:
+
+
+note:
+/gne/home/daij12/.local/lib/python2.7/site-packages/sklearn/cross_validation.py:44: DeprecationWarning: 
+This module was deprecated in version 0.18 in favor of the model_selection module into which all the refactored classes and 
+functions are moved. Also note that the interface of the new CV iterators are different from that of this module. This module 
+will be removed in 0.20. "This module will be removed in 0.20.", DeprecationWarning)
+
+'''
+
+
+
 # usage: python classify_nodes.py nodes.npy 
 
 import numpy as np
@@ -7,13 +28,14 @@ from sklearn import cross_validation
 from sklearn.cross_validation import StratifiedKFold as KFold
 from sklearn.metrics import classification_report
 from sklearn.ensemble import RandomForestClassifier as RF
-import xgboost as xgb
+#import xgboost as xgb
+from skimage import measure
 
 def getRegionFromMap(slice_npy):
     thr = np.where(slice_npy > np.mean(slice_npy),0.,1.0)
-    label_image = label(thr)
+    label_image = measure.label(thr)
     labels = label_image.astype(int)
-    regions = regionprops(labels)
+    regions = measure.regionprops(labels)
     return regions
 
 def getRegionMetricRow(fname = "nodules.npy"):
@@ -141,5 +163,11 @@ def classifyData():
 if __name__ == "__main__":
     from sys import argv  
     
-    getRegionMetricRow(argv[1:])
-    classifyData()
+    #getRegionMetricRow(argv[1:])
+    print getRegionMetricRow('masksTestPredicted.npy')
+'''
+[  2.16875000e+02   2.57900000e+03   6.90278760e-01   9.16564621e+00
+   1.38609075e+01   1.62084726e+02   3.15923055e+02   1.60000000e+01
+   5.33333333e+00]
+'''
+    #classifyData()
