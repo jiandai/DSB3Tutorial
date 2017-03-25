@@ -8,8 +8,10 @@ hacked ver 20170323 by jian:
     - node mask in this script is only resized / commented out entirely
     - merge two loops into one single loop
     - redefine the output as preprocessed figures
+ver 20170324 by jian: use stage1 scan or the resampled
 
 to-do: 
+=> merge steps
 '''
 import numpy as np
 from skimage import morphology
@@ -27,19 +29,31 @@ def debugPlot(x):
     cbar = fig.colorbar(cax)
     plt.show()
 
+
+# preproc-training-set-batch-1.npz
+
+
+
 #working_path = "/home/jonathan/tutorial/"
-working_path = '../../input/sample_images/'
+#working_path = '../../input/sample_images/'
+working_path = '../../input/stage1/'
 #file_list=glob(working_path+"images_*.npy")
 file_list=glob(working_path+'*')
+
 import dicom
 out_images = []      #final set of images
-for img_file in file_list[:1]:
+for img_file in file_list[:3]:
     # I ran into an error when using Kmean on np.float16, so I'm using np.float64 here
     #imgs_to_process = np.load(img_file).astype(np.float64) 
-    imgs_to_process = [dicom.read_file(f).pixel_array.astype(np.float64) for f in glob(working_path+img_file+'/*.dcm')]
+    dicom_files = [dicom.read_file(f) for f in glob(working_path+img_file+'/*.dcm')]
+    dicom_files.sort(key=lambda x:x.ImagePositionPatient[2])
+    imgs_to_process = [f.pixel_array.astype(np.float64) for f in dicom_files]
     print("on image", img_file)
-    for i in range(len(imgs_to_process))[100:103]:
+    for i in range(len(imgs_to_process))[100:107]:
         img = imgs_to_process[i]
+
+
+
         #Standardize the pixel values
         mean = np.mean(img)
         std = np.std(img)
@@ -175,7 +189,7 @@ for img_file in file_list[:1]:
         # (there's probably an skimage command that can do this in one line)
         # 
         img = img[min_row:max_row,min_col:max_col] 
-        debugPlot(img)
+        #debugPlot(img)
 
         mask =  mask[min_row:max_row,min_col:max_col]
         if max_row-min_row <5 or max_col-min_col<5:  # skipping all images with no god regions
@@ -188,22 +202,29 @@ for img_file in file_list[:1]:
             max = np.max(img)
             img = img/(max-min)
             new_img = resize(img,[512,512]) 
-            debugPlot(new_img)
+            #debugPlot(new_img)
             #new_node_mask = resize(node_mask[min_row:max_row,min_col:max_col],[512,512])
             out_images.append(new_img)
             #out_nodemasks.append(new_node_mask)
 
-num_images = len(out_images)
+#num_images = len(out_images)
 
-print(num_images)
+#print(num_images)
 #
 #  Writing out images and masks as 1 channel arrays for input into network
 #
-final_images = np.ndarray([num_images,1,512,512],dtype=np.float32)
+#final_images = np.ndarray([num_images,1,512,512],dtype=np.float32)
 #final_masks = np.ndarray([num_images,1,512,512],dtype=np.float32)
-for i in range(num_images):
-    final_images[i,0] = out_images[i]
+#for i in range(num_images):
+#    final_images[i,0] = out_images[i]
     #final_masks[i,0] = out_nodemasks[i]
+
+
+# This is the equivalent way to create "final_images" array object
+final_images = np.stack([s.reshape(1,512,512) for s in out_images])
+
+
+
 
 #rand_i = np.random.choice(range(num_images),size=num_images,replace=False)
 #test_i = int(0.2*num_images)
@@ -212,7 +233,9 @@ for i in range(num_images):
 #np.save(working_path+"testImages.npy",final_images[rand_i[:test_i]])
 #np.save(working_path+"testMasks.npy",final_masks[rand_i[:test_i]])
 
-np.save("pre-processed-images.npy",final_images)
+
+
+#np.save("pre-processed-images-test-2.npy",final_images)
 
 
 

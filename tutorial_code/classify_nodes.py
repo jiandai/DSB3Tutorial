@@ -6,8 +6,9 @@ https://github.com/jiandai/DSB3Tutorial
 hacked ver 20170323 by jian:
 	- rewire the input/output from LUNA_segment_lung_ROI.py
 	- use pretrained unet in LUNA_train_unet.py
+	- create feature /w one sample file
 to-do:
-
+=> rewire truthdata
 
 note:
 /gne/home/daij12/.local/lib/python2.7/site-packages/sklearn/cross_validation.py:44: DeprecationWarning: 
@@ -164,7 +165,8 @@ if __name__ == "__main__":
     from sys import argv  
     
     #getRegionMetricRow(argv[1:])
-    print getRegionMetricRow('masksTestPredicted.npy')
+    #print getRegionMetricRow('masksTestPredicted.npy')
+    print getRegionMetricRow('masksTestPredicted-test-2.npy')
 '''
 [  2.16875000e+02   2.57900000e+03   6.90278760e-01   9.16564621e+00
    1.38609075e+01   1.62084726e+02   3.15923055e+02   1.60000000e+01

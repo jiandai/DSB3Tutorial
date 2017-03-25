@@ -101,7 +101,8 @@ def train_and_predict(use_existing):
     #imgs_mask_train = np.load(working_path+"trainMasks.npy").astype(np.float32)
 
     #imgs_test = np.load(working_path+"testImages.npy").astype(np.float32)
-    imgs_test = np.load(working_path+"pre-processed-images.npy").astype(np.float32)
+    #imgs_test = np.load(working_path+"pre-processed-images.npy").astype(np.float32)
+    imgs_test = np.load(working_path+"pre-processed-images-test-2.npy").astype(np.float32)
     #imgs_mask_test_true = np.load(working_path+"testMasks.npy").astype(np.float32)
     
     #mean = np.mean(imgs_train)  # mean for data centering
@@ -149,7 +150,8 @@ def train_and_predict(use_existing):
     imgs_mask_test = np.ndarray([num_test,1,512,512],dtype=np.float32)
     for i in range(num_test):
         imgs_mask_test[i] = model.predict([imgs_test[i:i+1]], verbose=0)[0]
-    np.save('masksTestPredicted.npy', imgs_mask_test)
+    #np.save('masksTestPredicted.npy', imgs_mask_test)
+    np.save('masksTestPredicted-test-2.npy', imgs_mask_test)
     #mean = 0.0
     #for i in range(num_test):
     #    mean+=dice_coef_np(imgs_mask_test_true[i,0], imgs_mask_test[i,0])
