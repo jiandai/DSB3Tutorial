@@ -38,7 +38,7 @@ def debugPlot(x):
 #working_path = "/home/jonathan/tutorial/"
 #working_path = '../../input/sample_images/'
 #working_path = '../../input/stage1/'
-working_path = '/gnet/is7/workspace/daij12/luna16/processed/'
+working_path = '../../../../../luna16/processed/'
 file_list=glob(working_path+"images_*.npy")
 #file_list=glob(working_path+'*')
 

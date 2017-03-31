@@ -24,7 +24,7 @@ K.set_image_dim_ordering('th')  # Theano dimension ordering in this code
 #N_EPOCH = 2
 N_EPOCH = 25
 
-working_path = "/gnet/is7/workspace/daij12/luna16/processed/"
+working_path = "../../../../../luna16/processed/"
 #working_path = "./"
 
 

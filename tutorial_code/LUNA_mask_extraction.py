@@ -72,7 +72,7 @@ Returns uint16 version
 ############
 #
 # Getting list of image files
-luna_path = "/gnet/is7/workspace/daij12/luna16/"
+luna_path = '../../../../../luna16/'
 
 import sys
 subset_ord = int(sys.argv[1])-1
