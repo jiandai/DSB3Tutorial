@@ -1,9 +1,20 @@
-from __future__ import print_function, division
+'''
+forked from
+https://github.com/booz-allen-hamilton/DSB3Tutorial
+as
+https://github.com/jiandai/DSB3Tutorial
+hacked ver 20170330 by jian:
+
+to-do:
+'''
+
+#from __future__ import print_function, division
 import SimpleITK as sitk
 import numpy as np
 import csv
 from glob import glob
 import pandas as pd
+import os
 try:
     from tqdm import tqdm # long waits are not fun
 except:
@@ -61,11 +72,15 @@ Returns uint16 version
 ############
 #
 # Getting list of image files
-luna_path = "/home/jonathan/LUNA2016/"
-luna_subset_path = luna_path+"subset1/"
-output_path = "/home/jonathan/tutorial/"
-file_list=glob(luna_subset_path+"*.mhd")
+luna_path = "/gnet/is7/workspace/daij12/luna16/"
 
+import sys
+subset_ord = int(sys.argv[1])-1
+# assume len(sys.argv)>1:
+# assertion: input is 0,1,...,9
+luna_subset_path = luna_path+"input/subset"+ str(subset_ord) +"/"
+output_path = luna_path+"processed/"
+file_list=glob(luna_subset_path+"*.mhd")
 
 #####################
 #
@@ -77,15 +92,23 @@ def get_filename(file_list, case):
             return(f)
 #
 # The locations of the nodes
-df_node = pd.read_csv(luna_path+"annotations.csv")
+df_node = pd.read_csv(luna_path+"input/annotations.csv")
+#print df_node.shape
+#shape of whole csv: (1186, 5)
+#Index([u'seriesuid', u'coordX', u'coordY', u'coordZ', u'diameter_mm'], dtype='object')
+#print df_node.seriesuid.unique().shape
+# 601 unique ids
+
+
 df_node["file"] = df_node["seriesuid"].map(lambda file_name: get_filename(file_list, file_name))
 df_node = df_node.dropna()
+# when using subset1, (128, 6)
 
 #####
 #
 # Looping over the image files
 #
-for fcount, img_file in enumerate(tqdm(file_list)):
+for fcount, img_file in enumerate(tqdm(file_list[:])):
     mini_df = df_node[df_node["file"]==img_file] #get all nodules associate with file
     if mini_df.shape[0]>0: # some files may not have a nodule--skipping those 
         # load the data once

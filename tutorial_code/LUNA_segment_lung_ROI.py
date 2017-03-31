@@ -9,6 +9,7 @@ hacked ver 20170323 by jian:
     - merge two loops into one single loop
     - redefine the output as preprocessed figures
 ver 20170324 by jian: use stage1 scan or the resampled
+ver 20170330 by jian: get LUNA data, reverse from dicom
 
 to-do: 
 => merge steps
@@ -36,21 +37,25 @@ def debugPlot(x):
 
 #working_path = "/home/jonathan/tutorial/"
 #working_path = '../../input/sample_images/'
-working_path = '../../input/stage1/'
-#file_list=glob(working_path+"images_*.npy")
-file_list=glob(working_path+'*')
+#working_path = '../../input/stage1/'
+working_path = '/gnet/is7/workspace/daij12/luna16/processed/'
+file_list=glob(working_path+"images_*.npy")
+#file_list=glob(working_path+'*')
 
-import dicom
+#import dicom
 out_images = []      #final set of images
-for img_file in file_list[:3]:
+out_nodemasks = []   #final set of nodemasks
+for img_file in file_list[:]:
     # I ran into an error when using Kmean on np.float16, so I'm using np.float64 here
-    #imgs_to_process = np.load(img_file).astype(np.float64) 
-    dicom_files = [dicom.read_file(f) for f in glob(working_path+img_file+'/*.dcm')]
-    dicom_files.sort(key=lambda x:x.ImagePositionPatient[2])
-    imgs_to_process = [f.pixel_array.astype(np.float64) for f in dicom_files]
+    imgs_to_process = np.load(img_file).astype(np.float64) 
+    node_masks = np.load(img_file.replace("images","masks"))
+    #dicom_files = [dicom.read_file(f) for f in glob(working_path+img_file+'/*.dcm')]
+    #dicom_files.sort(key=lambda x:x.ImagePositionPatient[2])
+    #imgs_to_process = [f.pixel_array.astype(np.float64) for f in dicom_files]
     print("on image", img_file)
-    for i in range(len(imgs_to_process))[100:107]:
+    for i in range(len(imgs_to_process))[:]:
         img = imgs_to_process[i]
+        node_mask = node_masks[i]
 
 
 
@@ -116,7 +121,7 @@ for img_file in file_list[:3]:
         for N in good_labels:
             mask = mask + np.where(labels==N,1,0)
         mask = morphology.dilation(mask,np.ones([10,10])) # one last dilation
-        imgs_to_process[i] = mask
+        #imgs_to_process[i] = mask
 
 
 
@@ -129,15 +134,12 @@ for img_file in file_list[:3]:
 
 
 #file_list=glob(working_path+"lungmask_*.npy")
-#out_nodemasks = []   #final set of nodemasks
 #for fname in file_list:
 #    print("working on file ", fname)
 #    imgs_to_process = np.load(fname.replace("lungmask","images"))
 #    masks = np.load(fname)
-#    node_masks = np.load(fname.replace("lungmask","masks"))
 #    for i in range(len(imgs_to_process)):
 #        mask = masks[i]
-#        node_mask = node_masks[i]
 #        img = imgs_to_process[i] 
 
 
@@ -203,35 +205,35 @@ for img_file in file_list[:3]:
             img = img/(max-min)
             new_img = resize(img,[512,512]) 
             #debugPlot(new_img)
-            #new_node_mask = resize(node_mask[min_row:max_row,min_col:max_col],[512,512])
+            new_node_mask = resize(node_mask[min_row:max_row,min_col:max_col],[512,512])
             out_images.append(new_img)
-            #out_nodemasks.append(new_node_mask)
+            out_nodemasks.append(new_node_mask)
 
-#num_images = len(out_images)
+num_images = len(out_images)
 
-#print(num_images)
+print(num_images)
 #
 #  Writing out images and masks as 1 channel arrays for input into network
 #
-#final_images = np.ndarray([num_images,1,512,512],dtype=np.float32)
-#final_masks = np.ndarray([num_images,1,512,512],dtype=np.float32)
-#for i in range(num_images):
-#    final_images[i,0] = out_images[i]
-    #final_masks[i,0] = out_nodemasks[i]
+final_images = np.ndarray([num_images,1,512,512],dtype=np.float32)
+final_masks = np.ndarray([num_images,1,512,512],dtype=np.float32)
+for i in range(num_images):
+    final_images[i,0] = out_images[i]
+    final_masks[i,0] = out_nodemasks[i]
 
 
 # This is the equivalent way to create "final_images" array object
-final_images = np.stack([s.reshape(1,512,512) for s in out_images])
+#final_images = np.stack([s.reshape(1,512,512) for s in out_images])
 
 
 
 
-#rand_i = np.random.choice(range(num_images),size=num_images,replace=False)
-#test_i = int(0.2*num_images)
-#np.save(working_path+"trainImages.npy",final_images[rand_i[test_i:]])
-#np.save(working_path+"trainMasks.npy",final_masks[rand_i[test_i:]])
-#np.save(working_path+"testImages.npy",final_images[rand_i[:test_i]])
-#np.save(working_path+"testMasks.npy",final_masks[rand_i[:test_i]])
+rand_i = np.random.choice(range(num_images),size=num_images,replace=False)
+test_i = int(0.2*num_images)
+np.save(working_path+"trainImages.npy",final_images[rand_i[test_i:]])
+np.save(working_path+"trainMasks.npy",final_masks[rand_i[test_i:]])
+np.save(working_path+"testImages.npy",final_images[rand_i[:test_i]])
+np.save(working_path+"testMasks.npy",final_masks[rand_i[:test_i]])
 
 
 
