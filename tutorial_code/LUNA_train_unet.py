@@ -6,6 +6,7 @@ https://github.com/jiandai/DSB3Tutorial
 hacked ver 20170323 by jian:
     - rewire the input/output from LUNA_segment_lung_ROI.py 
 ver 20170330 by jian: use LUNA data to train
+ver 20170331 by jian: dice coeff <.4 for 25 epoches, load weight and +105 epoches
 to-do:
 '''
 
@@ -22,7 +23,8 @@ from keras.callbacks import ModelCheckpoint, LearningRateScheduler
 from keras import backend as K
 K.set_image_dim_ordering('th')  # Theano dimension ordering in this code
 #N_EPOCH = 2
-N_EPOCH = 25
+#N_EPOCH = 25
+N_EPOCH = 105
 
 working_path = "../../../../../luna16/processed/"
 #working_path = "./"
@@ -131,7 +133,8 @@ def train_and_predict(use_existing):
     # Should we load existing weights? 
     # Set argument for call to train_and_predict to true at end of script
     if use_existing:
-        model.load_weights('../unet.hdf5') # modify the path
+        #model.load_weights('../unet.hdf5') # modify the path
+        model.load_weights('./unet.hdf5') # modify the path
         
     # 
     # The final results for this tutorial were produced using a multi-GPU
@@ -165,8 +168,8 @@ def train_and_predict(use_existing):
     mean = 0.0
     for i in range(num_test):
         mean+=dice_coef_np(imgs_mask_test_true[i,0], imgs_mask_test[i,0])
-    mean/=num_test
     print("Mean Dice Coeff : ",mean)
 
 if __name__ == '__main__':
-    train_and_predict(False)
+    #train_and_predict(False)
+    train_and_predict(True)
