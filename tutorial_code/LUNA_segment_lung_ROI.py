@@ -10,9 +10,10 @@ hacked ver 20170323 by jian:
     - redefine the output as preprocessed figures
 ver 20170324 by jian: use stage1 scan or the resampled
 ver 20170330 by jian: get LUNA data, reverse from dicom
+ver 20170401 by jian: debug steps
+ver 20170402 by jian: remove cropping and resizing
 
 to-do: 
-=> merge steps
 '''
 import numpy as np
 from skimage import morphology
@@ -56,7 +57,6 @@ for img_file in file_list[:]:
     for i in range(len(imgs_to_process))[:]:
         img = imgs_to_process[i]
         node_mask = node_masks[i]
-
 
 
         #Standardize the pixel values
@@ -163,6 +163,10 @@ for img_file in file_list[:]:
         #make image bounding box  (min row, min col, max row, max col)
         labels = measure.label(mask)
         regions = measure.regionprops(labels)
+
+
+
+
         #
         # Finding the global min and max row over all regions
         #
@@ -190,13 +194,23 @@ for img_file in file_list[:]:
         # cropping the image down to the bounding box for all regions
         # (there's probably an skimage command that can do this in one line)
         # 
-        img = img[min_row:max_row,min_col:max_col] 
+
+
+
+        #img = img[min_row:max_row,min_col:max_col] 
         #debugPlot(img)
 
-        mask =  mask[min_row:max_row,min_col:max_col]
+
+        #mask =  mask[min_row:max_row,min_col:max_col]
+
         if max_row-min_row <5 or max_col-min_col<5:  # skipping all images with no god regions
             pass
         else:
+            # remove cropping and resizing
+            out_images.append(img)
+            out_nodemasks.append(node_mask)
+
+            '''
             # moving range to -1 to 1 to accomodate the resize function
             mean = np.mean(img)
             img = img - mean
@@ -206,17 +220,29 @@ for img_file in file_list[:]:
             new_img = resize(img,[512,512]) 
             #debugPlot(new_img)
             new_node_mask = resize(node_mask[min_row:max_row,min_col:max_col],[512,512])
-            out_images.append(new_img)
-            out_nodemasks.append(new_node_mask)
+            a=new_node_mask.min()
+            b=new_node_mask.max()
+            if b>a:
+                new_node_mask = new_node_mask/(b-a)
+                #print np.histogram(new_node_mask)
+                out_images.append(new_img)
+                out_nodemasks.append(new_node_mask)
+            else:
+                print 'passed case:',a,b
+                pass
+            '''
+
+
+
 
 num_images = len(out_images)
-
 print(num_images)
 #
 #  Writing out images and masks as 1 channel arrays for input into network
 #
 final_images = np.ndarray([num_images,1,512,512],dtype=np.float32)
-final_masks = np.ndarray([num_images,1,512,512],dtype=np.float32)
+#final_masks = np.ndarray([num_images,1,512,512],dtype=np.float32)
+final_masks = np.ndarray([num_images,1,512,512],dtype=np.int8)
 for i in range(num_images):
     final_images[i,0] = out_images[i]
     final_masks[i,0] = out_nodemasks[i]
@@ -230,10 +256,10 @@ for i in range(num_images):
 
 rand_i = np.random.choice(range(num_images),size=num_images,replace=False)
 test_i = int(0.2*num_images)
-np.save(working_path+"trainImages.npy",final_images[rand_i[test_i:]])
-np.save(working_path+"trainMasks.npy",final_masks[rand_i[test_i:]])
-np.save(working_path+"testImages.npy",final_images[rand_i[:test_i]])
-np.save(working_path+"testMasks.npy",final_masks[rand_i[:test_i]])
+np.save(working_path+"trainImages-v3.npy",final_images[rand_i[test_i:]])
+np.save(working_path+"trainMasks-v3.npy",final_masks[rand_i[test_i:]])
+np.save(working_path+"testImages-v3.npy",final_images[rand_i[:test_i]])
+np.save(working_path+"testMasks-v3.npy",final_masks[rand_i[:test_i]])
 
 
 

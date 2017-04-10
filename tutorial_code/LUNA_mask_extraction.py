@@ -4,6 +4,7 @@ https://github.com/booz-allen-hamilton/DSB3Tutorial
 as
 https://github.com/jiandai/DSB3Tutorial
 hacked ver 20170330 by jian:
+ver 20170401 by jian: debug steps (ok)
 
 to-do:
 '''
@@ -77,10 +78,11 @@ luna_path = '../../../../../luna16/'
 import sys
 subset_ord = int(sys.argv[1])-1
 # assume len(sys.argv)>1:
-# assertion: input is 0,1,...,9
+# assertion: input is 1-10
 luna_subset_path = luna_path+"input/subset"+ str(subset_ord) +"/"
 output_path = luna_path+"processed/"
 file_list=glob(luna_subset_path+"*.mhd")
+#print file_list
 
 #####################
 #
@@ -103,7 +105,7 @@ df_node = pd.read_csv(luna_path+"input/annotations.csv")
 df_node["file"] = df_node["seriesuid"].map(lambda file_name: get_filename(file_list, file_name))
 df_node = df_node.dropna()
 # when using subset1, (128, 6)
-
+#print df_node
 #####
 #
 # Looping over the image files
